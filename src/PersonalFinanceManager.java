@@ -6,6 +6,7 @@ import java.sql.*;
 import java.text.SimpleDateFormat;
 
 public class PersonalFinanceManager extends JFrame {
+
     private Connection connection;
     private JTextField amountField;
     private JTextField descriptionField;
@@ -16,7 +17,7 @@ public class PersonalFinanceManager extends JFrame {
         // Initialize Database Connection
         initializeDB();
 
-        // Setup Frame
+        // Setup Frame 
         setTitle("Personal Finance Manager");
         setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -24,7 +25,7 @@ public class PersonalFinanceManager extends JFrame {
 
         // Input Panel
         JPanel inputPanel = new JPanel(new GridLayout(5, 2, 10, 10));
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JLabel typeLabel = new JLabel("Type:");
         typeComboBox = new JComboBox<>(new String[]{"Income", "Expense"});
@@ -63,6 +64,7 @@ public class PersonalFinanceManager extends JFrame {
         setVisible(true);
     }
 
+
     private void initializeDB() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -76,10 +78,14 @@ public class PersonalFinanceManager extends JFrame {
         try {
             String query = "insert into transactions (type, amount, description, date) VALUES (?, ?, ?, ?)";
             PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setString(1, type);
-            stmt.setDouble(2, amount);
-            stmt.setString(3, description);
-            stmt.setDate(4, new Date(System.currentTimeMillis()));
+            try {
+                stmt.setString(1, type);
+                stmt.setDouble(2, amount);
+                stmt.setString(3, description);
+                stmt.setDate(4, new Date(System.currentTimeMillis()));
+            }catch (SQLException e) {
+                JOptionPane.showMessageDialog(this,"invalid Format please check them....!");
+            }
             stmt.executeUpdate();
             stmt.close();
         } catch (SQLException e) {
@@ -99,7 +105,9 @@ public class PersonalFinanceManager extends JFrame {
             JOptionPane.showMessageDialog(this, "Error clearing transactions.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-
+    double totalIncome;
+    double totalExpense;
+    double Net_Balence;
     private void updateSummary() {
         try {
             String query = "select * from transactions";
@@ -127,7 +135,8 @@ public class PersonalFinanceManager extends JFrame {
 
             summary.append("\nTotal Income: ").append(totalIncome);
             summary.append("\nTotal Expense: ").append(totalExpense);
-            summary.append("\nNet Balance: ").append(totalIncome - totalExpense);
+            Net_Balence = totalIncome - totalExpense;
+            summary.append("\nNet Balance: ").append(Net_Balence);
 
             summaryArea.setText(summary.toString());
 
@@ -143,22 +152,31 @@ public class PersonalFinanceManager extends JFrame {
         public void actionPerformed(ActionEvent e) {
             String type = (String) typeComboBox.getSelectedItem();
             double amount = Double.parseDouble(amountField.getText());
-            String description = descriptionField.getText();
+                String description = descriptionField.getText();
 
-            addTransaction(type, amount, description);
-            updateSummary();
+                if( Net_Balence < amount && type == "Expense") {
+                    System.out.println("your Net balence is not suffient..!");
+                }else {
+                    addTransaction(type, amount, description);
+                    updateSummary();
 
-            amountField.setText("");
-            descriptionField.setText("");
+                    amountField.setText("");
+                    descriptionField.setText("");
+                }
+
+           }
         }
-    }
 
-    private class ClearButtonListener implements ActionListener {
+
+      class ClearButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             clearTransactions();
             updateSummary();
         }
+    }
+    public  void printjop(){
+        JOptionPane.showMessageDialog(this,"your balence not sufficient,...!");
     }
 
     public static void main(String[] args) {
